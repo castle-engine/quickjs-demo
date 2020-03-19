@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CONFIG>
-  <Compiler Value="/Users/coldzer0/fpcupdeluxe/fpc/bin/x86_64-darwin/fpc.sh" Date="1584312056"/>
-  <Params Value=" -MObjFPC -Scghi -CX -O3 -XX -k-L/usr/X11/lib/ -l -vewnhibq -Fi/Users/coldzer0/Coldzer0/CGE_JS/quickjs-demo/lib/x86_64-darwin -Fu/Users/coldzer0/Coldzer0/CGE_JS/QuickJS-Pascal -Fu/Users/coldzer0/Coldzer0/CGE_JS/castle_game_engine/packages/lib/castle_window/x86_64-darwin -Fu/Users/coldzer0/Coldzer0/CGE_JS/castle_game_engine/packages/lib/castle_base/x86_64-darwin -Fu/Users/coldzer0/fpcupdeluxe/lazarus/packager/units/x86_64-darwin -Fu/Users/coldzer0/Coldzer0/CGE_JS/quickjs-demo/ -FU/Users/coldzer0/Coldzer0/CGE_JS/quickjs-demo/lib/x86_64-darwin/ -FE/Users/coldzer0/Coldzer0/CGE_JS/quickjs-demo/ -o/Users/coldzer0/Coldzer0/CGE_JS/quickjs-demo/SnakeGame SnakeGame.pas"/>
-</CONFIG>
