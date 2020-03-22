@@ -1,6 +1,3 @@
-{$mode objfpc}{$H+}
-{I highly recommend preforming range-checking during development}
-{$R+}{$Q+}
 program SnakeGame;
 uses
   CastleWindow, SnakeGameMain, QJS_Engine,SnakeUnit, sysutils;
