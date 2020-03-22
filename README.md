@@ -1,22 +1,20 @@
-# Control a snake using A.I. in JavaScript, using QuickJS-Pascal with Castle Game Engine
+# Control a snake using JavaScript (demo of QuickJS-Pascal and Castle Game Engine)
 
-This demo shows [QuickJS-Pascal](https://github.com/Coldzer0/QuickJS-Pascal) integrated with [Castle Game Engine](https://castle-engine.io/). [QuickJS-Pascal](https://github.com/Coldzer0/QuickJS-Pascal) are Pascal bindings of [QuickJS](https://bellard.org/quickjs/) by [Coldzer0](https://github.com/Coldzer0).
+This demo shows [QuickJS-Pascal](https://github.com/Coldzer0/QuickJS-Pascal) (Pascal bindings to [QuickJS](https://bellard.org/quickjs/)) integrated with [Castle Game Engine](https://castle-engine.io/).
 
-The demo is based on [https://github.com/eugeneloza/SnakeGame](SnakeGame by Eugene Loza). In the original snake game, you control snake by the keyboard. In this version, you control snake by implementing an A.I. using JavaScript :)
+The demo is based on a [snake game](https://github.com/eugeneloza/SnakeGame). In the original snake game, you control snake by the keyboard. In this version, you control snake by implementing an A.I. using JavaScript :)
 
-The core file to play with is the `data/movement.js`. There you have to define a global `update` function, which is called once per second, and can move the snake using these JS functions:
+The core file to play with is the [data/movement.js](https://github.com/castle-engine/quickjs-demo/blob/master/data/movement.js). There you have to define a global `update` function, which is called once per second, and can move the snake using these JS functions:
 
-- `goal_position()` - returns a structure with `x` and `y` fields (like `{x:3,y:5}`) that contains the position of the "goal" on the map,
+- `goal_position()` - returns a structure with `x` and `y` fields (like `{x:3,y:5}`) that contains the position of the "goal" on the map
 
-- `player_position()` - returns a structure with `x` and `y` fields that contains the current player position of the map,
+- `player_position()` - returns a structure with `x` and `y` fields that contains the current player position of the map.
 
 - `move(x, y)`. Can be called at most once per `update()`. The only allowed arguments' combinations are:
     - `move(+1, 0)` (move right)
     - `move(-1, 0)` (move left)
     - `move(0, +1)` (move up)
     - `move(0, -1)` (move down)
-
-See [https://docs.google.com/document/d/1Gdc6Jf-cHGNCekoklZ1FCvVc1-IoL4CCRJTRlytjZz8/edit#](the initial idea doc).
 
 # Supports
 
@@ -41,6 +39,6 @@ https://github.com/Coldzer0/QuickJS-Pascal
 
 ### Game Credit
 
-By [Coldzer0](https://github.com/Coldzer0).
+Demo by [Coldzer0](https://github.com/Coldzer0), who also created [QuickJS-Pascal](https://github.com/Coldzer0/QuickJS-Pascal).
 
-Original [SnakeGame by Eugene Loza](https://github.com/eugeneloza/SnakeGame).
+[Original snake game](https://github.com/eugeneloza/SnakeGame) by [Eugene Loza](https://github.com/eugeneloza/).
