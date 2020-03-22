@@ -1,23 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project name="SnakeGame"
   caption="SnakeGame"
-  qualified_name="localhost.debian.eugeneloza.snakegame"
-  standalone_source="snakegame.pas"
-  <!-- android_source="snakegame.lpr" -->
-  <!-- android_project="android_application/" -->
-  <!-- screen_orientation="landscape" -->
-  author="Eugene Loza">
-<!--
+  qualified_name="com.eugeneloza.snakegame"
+  game_units="SnakeGameMain"
+  >
+
   <icons>
     <icon path="snake_icon.png" />
   </icons>
 
-  <android project_type="integrated" /> <!-- necessary for sound to work -->
+  <ios 
+    override_qualified_name="com.eugeneloza.snakegame"
+    uses_non_exempt_encryption="true">
+  </ios>
+
   <package>
-    <exclude path="data/interface/fonts/*" /> <!-- no freetype lib available yet, using pre-generated fonts -->
+    <include path="data/*" recursive="True" />
+    <exclude path="*.xcf" />
+    <exclude path="*.blend*" />
+    <exclude path="*~" />
+    <exclude path="*/.DS_Store" />
+    <exclude path="*/thumbs.db" />
   </package>
+
   <dependencies>
-    <dependency name="Zlib" /> <!-- zlib, to read .gz files -->
-    <dependency name="Png" /> <!-- libpng, to read .png files -->
+    <dependency name="Png" />
+    <dependency name="Sound" />
+    <dependency name="OggVorbis" />
+    <dependency name="FreeType" />
   </dependencies>
 </project>

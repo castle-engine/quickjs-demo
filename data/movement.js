@@ -1,3 +1,5 @@
+console.log('Hello From JS')
+
 function print_pos(p, g) {
     console.log('Player at : ', p.x, ',', p.y, ' - Goal at : ', g.x, ',', g.y);
 }

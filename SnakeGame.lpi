@@ -7,111 +7,35 @@
         <MainUnitHasCreateFormStatements Value="False"/>
         <MainUnitHasTitleStatement Value="False"/>
         <MainUnitHasScaledStatement Value="False"/>
-        <CompatibilityMode Value="True"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <Title Value="SnakeGame"/>
+      <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
-    <i18n>
-      <EnableI18N LFM="False"/>
-    </i18n>
-    <BuildModes Count="3">
-      <Item1 Name="Default" Default="True"/>
-      <Item2 Name="Debug">
-        <CompilerOptions>
-          <Version Value="11"/>
-          <Target>
-            <Filename Value="SnakeGame"/>
-          </Target>
-          <SearchPaths>
-            <IncludeFiles Value="$(ProjOutDir)"/>
-            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
-          </SearchPaths>
-          <Parsing>
-            <SyntaxOptions>
-              <IncludeAssertionCode Value="True"/>
-            </SyntaxOptions>
-          </Parsing>
-          <CodeGeneration>
-            <Checks>
-              <IOChecks Value="True"/>
-              <RangeChecks Value="True"/>
-              <OverflowChecks Value="True"/>
-              <StackChecks Value="True"/>
-            </Checks>
-          </CodeGeneration>
-          <Linking>
-            <Debugging>
-              <DebugInfoType Value="dsDwarf2Set"/>
-              <UseHeaptrc Value="True"/>
-              <UseExternalDbgSyms Value="True"/>
-            </Debugging>
-          </Linking>
-        </CompilerOptions>
-      </Item2>
-      <Item3 Name="Release">
-        <CompilerOptions>
-          <Version Value="11"/>
-          <Target>
-            <Filename Value="SnakeGame"/>
-          </Target>
-          <SearchPaths>
-            <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="."/>
-            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
-          </SearchPaths>
-          <CodeGeneration>
-            <SmartLinkUnit Value="True"/>
-            <Optimizations>
-              <OptimizationLevel Value="3"/>
-            </Optimizations>
-          </CodeGeneration>
-          <Linking>
-            <Debugging>
-              <GenerateDebugInfo Value="False"/>
-            </Debugging>
-            <LinkSmart Value="True"/>
-            <Options>
-              <PassLinkerOptions Value="True"/>
-              <LinkerOptions Value="-L/usr/X11/lib/"/>
-            </Options>
-          </Linking>
-        </CompilerOptions>
-      </Item3>
+    <BuildModes>
+      <Item Name="Default" Default="True"/>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
+      <UseFileFilters Value="True"/>
     </PublishOptions>
     <RunParams>
       <FormatVersion Value="2"/>
-      <Modes Count="1">
-        <Mode0 Name="default"/>
-      </Modes>
     </RunParams>
-    <RequiredPackages Count="2">
-      <Item1>
+    <RequiredPackages>
+      <Item>
         <PackageName Value="castle_window"/>
-      </Item1>
-      <Item2>
+      </Item>
+      <Item>
         <PackageName Value="castle_base"/>
-      </Item2>
+      </Item>
     </RequiredPackages>
-    <Units Count="3">
-      <Unit0>
-        <Filename Value="SnakeGame.pas"/>
+    <Units>
+      <Unit>
+        <Filename Value="SnakeGame.lpr"/>
         <IsPartOfProject Value="True"/>
-      </Unit0>
-      <Unit1>
-        <Filename Value="snakeunit.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="SnakeUnit"/>
-      </Unit1>
-      <Unit2>
-        <Filename Value="qjs_engine.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="QJS_Engine"/>
-      </Unit2>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -123,18 +47,24 @@
       <IncludeFiles Value="$(ProjOutDir)"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
+    <Linking>
+      <Options>
+        <PassLinkerOptions Value="True"/>
+        <LinkerOptions Value="-L/usr/X11/lib"/>
+      </Options>
+    </Linking>
   </CompilerOptions>
   <Debugging>
-    <Exceptions Count="3">
-      <Item1>
+    <Exceptions>
+      <Item>
         <Name Value="EAbort"/>
-      </Item1>
-      <Item2>
+      </Item>
+      <Item>
         <Name Value="ECodetoolError"/>
-      </Item2>
-      <Item3>
+      </Item>
+      <Item>
         <Name Value="EFOpenError"/>
-      </Item3>
+      </Item>
     </Exceptions>
   </Debugging>
 </CONFIG>

@@ -1,15 +1,16 @@
-program SnakeGame;
+unit SnakeGameMain;
 
-{to hide DOS window in Windows use $AppType GUI compiler directive}
-//{$IFDEF windows}{$AppType GUI}{$ENDIF}
+interface
 
-{I highly recommend preforming range-checking during development}
-{$R+}{$Q+}
 
-uses SysUtils, Math, CastleWindow, CastleFilesUtils, CastleKeysMouse,
-   CastleGLImages, CastleGLUtils, CastleVectors, CastleControls,
-   CastleLog, castle_window,
-   SnakeUnit, QJS_Engine, QuickJS;
+
+uses
+  CastleWindow,CastleApplicationProperties, CastleKeysMouse, CastleGLImages, CastleGLUtils,
+  CastleVectors, CastleControls, CastleLog,
+  SysUtils, Math,
+  SnakeUnit, QJS_Engine, QuickJS;
+
+
 
 { scale of the source sprites and their scaled version size at the screen }
 const
@@ -23,11 +24,15 @@ var { basic CastleWindow }
     {create some cheap animation effect}
     flipimage: boolean;
 
+implementation
+
 { this procedure is called each render }
 Procedure WindowRender(Container: TUIContainer);
 var i,ix,iy: integer;
     currentSnakeImage: TDrawableImage;
 begin
+  //UIFont.Print(0,0,Vector4(0.4,0.3,0.1,1),Format('FPS: %s', [Container.Fps.ToString]));
+
   //draw grassland
   for ix := 0 to maxx do
     for iy := 0 to maxy do
@@ -46,7 +51,7 @@ begin
   {We use UIFont defined in CastleControls unit as a "basic" font}
 
   {Show music CC-BY-SA credit :)}
-  UIFont.Print(0,Window.Height-18,Vector4(0,0.6,0.2,1),license_string);
+  UIFont.Print(0,Window.Height-18,Vector4(0,0.6,0.2,1),LicenseString);
 
   //draw rabbit
   SnakeImage.draw(rabbit.x*DestinationScale,rabbit.y*DestinationScale,DestinationScale,DestinationScale,
@@ -70,10 +75,15 @@ begin
 
   //give a endgame message
   if GameOver then begin
-    if score<=bestScore then begin
+    if score<=bestScore then
+    begin
+      WriteHighScore;
       UIFont.Print(Window.width div 2 - 80,Window.height div 2+15,Vector4(0.2,0.1,0,1),'GAME OVER!');
       UIFont.Print(Window.width div 2 - 80,Window.height div 2-15,Vector4(0.2,0.1,0,1),'Your score was: '+inttostr(score));
-    end else begin
+    end
+    else
+    begin
+      WriteHighScore;
       UIFont.Print(Window.width div 2 - 80,Window.height div 2+15,Vector4(1,1,0,1),'GAME OVER!');
       UIFont.Print(Window.width div 2 - 80,Window.height div 2-15,Vector4(1,1,0,1),'BEST SCORE: '+inttostr(score));
     end
@@ -82,25 +92,43 @@ end;
 
 procedure CallJSUpdate();
 var
-  JSErr, JSResult : JSValue;
+  JSErr, JSResult, JSFunc : JSValue;
 begin
-  if Assigned(QJSCtx) and JS_IsObject(JSGlobal) and
-  JS_IsObject(OnUpdate) and JS_IsFunction(QJSCtx,OnUpdate) then
+
+  if not Assigned(QJSCtx) then
   begin
-    JSResult := JS_Call(QJSCtx,OnUpdate,JSGlobal,0,nil);
+    WritelnLog('QJS Ctx Is nil');
+    exit;
+  end;
+
+  if not JS_IsObject(JSGlobal) then
+  begin
+    WritelnLog('JSGlobal Is not Obj');
+    exit;
+  end;
+
+  if JS_IsObject(OnUpdate) and JS_IsFunction(QJSCtx,OnUpdate) then
+  begin
+    JSFunc := JS_DupValue(QJSCtx,OnUpdate);
+    JSResult := JS_Call(QJSCtx,JSFunc,JS_UNDEFINED,0,nil);
+    JS_FreeValue(QJSCtx,JSFunc);
+
     if JS_IsException(JSResult) then
     begin
-      js_std_dump_error(QJSCtx);
-      Window.Close();
+      WritelnLog('[X] QJS Call Error');
+      js_dump_error(QJSCtx);
+      //Window.Close();
     end;
+    JS_FreeValue(QJSCtx,JSResult);
   end
   else
   begin
     JSErr := JS_GetException(QJSCtx);
     if JS_IsException(JSErr) then
     begin
-      js_std_dump_error(QJSCtx);
-      Window.Close();
+      WritelnLog('[X] QJS Undefined Error');
+      js_dump_error(QJSCtx);
+      //Window.Close();
     end;
   end;
 end;
@@ -118,7 +146,7 @@ begin
 end;
 
 {this procedure handles mouse and key presses}
-procedure KeyPress(Container: TUIContainer; const Event: TInputPressRelease);
+procedure KeyPress({%H-}Container: TUIContainer; const Event: TInputPressRelease);
 var dx,dy: integer;
 begin
   if not GameOver then
@@ -152,17 +180,41 @@ begin
     NewGame;
 end;
 
+procedure LoadData();
 begin
+
   // Init QuickJS Engine.
-  InitQJS('./data/movement.js');
-  {initialize log. Without parameters it goes directly into console on Linux
-   or DOS window in Windows, see documentation for more details.}
+  InitQJS('movement.js');
+
+  SnakeImage := TDrawableImage.Create('castle-data:/Snake.png',false);
+  SnakeFlipImage := TDrawableImage.Create('castle-data:/SnakeFlip.png',false);
+
+  ReadHighScore;
+  {Load music and sound}
+  LoadMusic;
+end;
+
+function MyGetApplicationName: string;
+begin
+  Result := 'snake-game';
+end;
+
+initialization
+  // Init Logs.
   InitializeLog;
-  {write something into Log}
-  WriteLnLog('Hello','World!');
+
+  ApplicationProperties.ApplicationName := 'snake-game';
+
+  OnGetApplicationName := @MyGetApplicationName;
+
+  SnakeImage := nil; SnakeFlipImage := nil;
+
+  Application.OnInitialize := @LoadData;
 
   {create window}
   Window := TCastleWindowBase.create(Application);
+  Application.MainWindow := Window;
+
   {initialize random sequence}
   randomize;
 
@@ -174,11 +226,6 @@ begin
   Window.Width := (maxx+1)*destinationScale;
   Window.Height := (maxy+1)*destinationScale;
 
-  {load spritesheet / no nice scaling because it's pixelart :)}
-  {ApplicationData points to content "data" in a cross-platform way, so that it
-   is correct in Windows, Linux, Android and any other OS}
-  SnakeImage := TDrawableImage.Create(ApplicationData('Snake.png'),false);
-  SnakeFlipImage := TDrawableImage.Create(ApplicationData('SnakeFlip.png'),false);
   flipImage := true;
 
   {create snake}
@@ -192,29 +239,12 @@ begin
   Window.ResizeAllowed := raNotAllowed;
 
   {set up application timer}
-  {this event will fire once every TimerMilisec (i.e. 300 msec)
-   It's not very accurate but hardly accuracy is significant}
-  Application.TimerMilisec := 300;
+  Application.TimerMilisec := 220;
   Application.OnTimer := @doTimer;
-
-  {Read High score from a file}
-  ReadHighScore;
-
-  {Load music and sound}
-  LoadMusic;
 
   {start a new game}
   score := 0;
   NewGame;
 
-  {and finally open the window and start the game}
-  Window.OpenAndRun;
-
-  WriteHighScore;
-
-  {don't forget to free everything that is not freed automatically}
-  UninitJSEngine();
-  FreeAndNil(SnakeImage);
-  FreeAndNil(SnakeFlipImage);
 end.
 
