@@ -130,6 +130,7 @@ begin
       js_dump_error(QJSCtx);
       //Window.Close();
     end;
+    JS_FreeValue(QJSCtx, JSErr);
   end;
 end;
 
