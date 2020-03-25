@@ -33,7 +33,7 @@ The demo is cross-platform and should support every platform supported by [Castl
         - Implement full UIFont interface to JS
 
 
-You can download QuickJS library files from here: TODO
+You can download QuickJS library files from here: [Download](https://github.com/Coldzer0/QuickJS-Pascal/tree/master/LibQJS)
 
 ## QuickJS-Pascal
 
