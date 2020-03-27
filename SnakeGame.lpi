@@ -50,7 +50,7 @@
     <Linking>
       <Options>
         <PassLinkerOptions Value="True"/>
-        <LinkerOptions Value="-L/usr/X11/lib"/>
+        <LinkerOptions Value=""/>
       </Options>
     </Linking>
   </CompilerOptions>
