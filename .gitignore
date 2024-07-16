@@ -8,4 +8,7 @@ lib/
 *.lps 
 *.res
 *.a
+*.exe
+*.dbg
 SnakeGame
+
