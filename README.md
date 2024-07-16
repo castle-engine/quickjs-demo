@@ -4,43 +4,30 @@
 
 This demo shows [QuickJS-Pascal](https://github.com/Coldzer0/QuickJS-Pascal) (Pascal bindings to [QuickJS](https://bellard.org/quickjs/)) integrated with [Castle Game Engine](https://castle-engine.io/).
 
-The demo is based on a [snake game](https://github.com/eugeneloza/SnakeGame). In the original snake game, you control snake by the keyboard. In this version, you control snake by implementing an A.I. using JavaScript :)
+The demo is to show how to bind native classes and functions to the JS engine to build a game in fully in JS.
 
-The core file to play with is the [data/movement.js](https://github.com/castle-engine/quickjs-demo/blob/master/data/movement.js). There you have to define a global `update` function, which is called once per second, and can move the snake using these JS functions:
+The core file to play with is the [data/main.js](https://github.com/castle-engine/quickjs-demo/blob/full_translation/data/main.js). There you have to import the needed Classes from `CastleEngine` to build a game from scratch:
 
-- `goal_position()` - returns a structure with `x` and `y` fields (like `{x:3,y:5}`) that contains the position of the "goal" on the map.
+- `Application` - has the same options in native Application ( Still in progress ).
 
-- `player_position()` - returns a structure with `x` and `y` fields that contains the current player position on the map.
+- `Window` - This class is needed to build a new window from the JS engine and it contains:
 
-- `move(x, y)`. Moves the player. Can be called at most once per `update()`. The only allowed arguments' combinations are:
-    - `move(+1, 0)` (move right)
-    - `move(-1, 0)` (move left)
-    - `move(0, +1)` (move up)
-    - `move(0, -1)` (move down)
+- `Window.OnRender` that allows you to render whatever you want from JS engine side.
 
 ## Supported platforms
 
-The demo is cross-platform and should support every platform supported by [Castle Game Engine](https://castle-engine.io/). Build it using [Castle Game Engine build tool](https://github.com/castle-engine/castle-engine/wiki/Build-Tool) or [Lazarus](https://www.lazarus-ide.org/).
+The demo is cross-platform and should support every platform supported by [Castle Game Engine](https://castle-engine.io/). Build it using [Castle Game Engine build tool](https://castle-engine.io/build_tool) or [Lazarus](https://www.lazarus-ide.org/).
 
 - Tested
-    - Mac OS Catalina
-    - IOS 13.3.1
+    - Mac OS
+    - Linux x86_64
+    - Windows
 
 - <b>TODO</b>
-    - Test on Linux, Windows, Android
-    - Add more JS examples
-        - Add Start function to be called on game init
-        - Implement full UIFont interface to JS
-
+    - Check [TODO.md](https://github.com/castle-engine/quickjs-demo/blob/full_translation/TODO.md)
 
 You can download QuickJS library files from here: [Download](https://github.com/Coldzer0/QuickJS-Pascal/tree/master/LibQJS)
 
 ## QuickJS-Pascal
 
 https://github.com/Coldzer0/QuickJS-Pascal
-
-## Game Credit
-
-Demo by [Coldzer0](https://github.com/Coldzer0), who also created [QuickJS-Pascal](https://github.com/Coldzer0/QuickJS-Pascal).
-
-[Original snake game](https://github.com/eugeneloza/SnakeGame) by [Eugene Loza](https://github.com/eugeneloza/).
