@@ -1,7 +1,7 @@
 {
   FreePascal / Delphi bindings for QuickJS Engine.
 
-  Copyright(c) 2020 Coldzer0 <Coldzer0 [at] protonmail.ch>
+  Copyright(c) 2019-2020 Coldzer0 <Coldzer0 [at] protonmail.ch>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to
@@ -22,7 +22,7 @@
   IN THE SOFTWARE.
 }
 
-unit QuickJS; // sync with version - "2020-03-16".
+unit QuickJS; // sync with version - "2020-04-12".
 
 {$IfDef FPC}
   {$MODE Delphi}
@@ -30,25 +30,11 @@ unit QuickJS; // sync with version - "2020-03-16".
 {$EndIf}
 
 {$IfDef FPC}
-  {$IfNDef windows}
-    {$LinkLib 'libquickjs.a'}
-  {$EndIf}
-{$EndIf}
-
-(* Faster Code - Link Time Optimization - Slow Compiling *)
-//{'libquickjs.lto.a'}
-
-//{'libquickjs.bn.a'} {$Define BIGNUM} // BigNumbers support.
-
-(* Faster Code  - BigNumbers support + Link Time Optimization - Slow Compiling *)
-//{'libquickjs.bn.lto.a'}
-
-{$IfDef FPC}
   {$IfNDef CPU64}
     {$Define JS_NAN_BOXING}
   {$ENDIF}
 {$ELSE}
-   {$IfNDef WIN64}
+   {$IfNDef CPUX64}
     {$Define JS_NAN_BOXING}
   {$ENDIF}
 {$ENDIF}
@@ -59,10 +45,10 @@ uses
   math;
 
 {===============================================================================}
-//                             QuickJS Constants
+{                              QuickJS Constants                                }
 {===============================================================================}
 const
-  QJS_VERSION = '2020-03-16';
+  QJS_VERSION = '2020-04-12';
 const
   { all tags with a reference count are negative }
   JS_TAG_FIRST                = -11; { first negative tag }
@@ -128,8 +114,8 @@ const
   JS_EVAL_TYPE_INDIRECT    = (3 shl 0); { indirect call (internal use) }
   JS_EVAL_TYPE_MASK        = (3 shl 0);
 
-  JS_EVAL_FLAG_STRICT       = (1 shl 3); { force 'strict' mode }
-  JS_EVAL_FLAG_STRIP        = (1 shl 4); { force 'strip' mode }
+  JS_EVAL_FLAG_STRICT      = (1 shl 3); { force 'strict' mode }
+  JS_EVAL_FLAG_STRIP       = (1 shl 4); { force 'strip' mode }
   (*
     compile but do not run. The result is an object with a
      JS_TAG_FUNCTION_BYTECODE or JS_TAG_MODULE tag. It can be executed
@@ -148,33 +134,33 @@ const
   JS_READ_OBJ_ROM_DATA      = (1 shl 1); { avoid duplicating 'buf' data  }
 
   { C property definition }
-  JS_DEF_CFUNC = 0;
-  JS_DEF_CGETSET = 1;
-  JS_DEF_CGETSET_MAGIC = 2;
-  JS_DEF_PROP_STRING = 3;
-  JS_DEF_PROP_INT32 = 4;
-  JS_DEF_PROP_INT64 = 5;
-  JS_DEF_PROP_DOUBLE = 6;
-  JS_DEF_PROP_UNDEFINED = 7;
-  JS_DEF_OBJECT = 8;
-  JS_DEF_ALIAS = 9;
+  JS_DEF_CFUNC            = 0;
+  JS_DEF_CGETSET          = 1;
+  JS_DEF_CGETSET_MAGIC    = 2;
+  JS_DEF_PROP_STRING      = 3;
+  JS_DEF_PROP_INT32       = 4;
+  JS_DEF_PROP_INT64       = 5;
+  JS_DEF_PROP_DOUBLE      = 6;
+  JS_DEF_PROP_UNDEFINED   = 7;
+  JS_DEF_OBJECT           = 8;
+  JS_DEF_ALIAS            = 9;
 
 
   { C function definition }
   { JSCFunctionEnum }
-  JS_CFUNC_generic = 0;
-  JS_CFUNC_generic_magic = 1;
-  JS_CFUNC_constructor = 2;
-  JS_CFUNC_constructor_magic = 3;
-  JS_CFUNC_constructor_or_func = 4;
+  JS_CFUNC_generic                   = 0;
+  JS_CFUNC_generic_magic             = 1;
+  JS_CFUNC_constructor               = 2;
+  JS_CFUNC_constructor_magic         = 3;
+  JS_CFUNC_constructor_or_func       = 4;
   JS_CFUNC_constructor_or_func_magic = 5;
-  JS_CFUNC_f_f = 6;
-  JS_CFUNC_f_f_f = 7;
-  JS_CFUNC_getter = 8;
-  JS_CFUNC_setter = 9;
-  JS_CFUNC_getter_magic = 10;
-  JS_CFUNC_setter_magic = 11;
-  JS_CFUNC_iterator_next = 12;
+  JS_CFUNC_f_f                       = 6;
+  JS_CFUNC_f_f_f                     = 7;
+  JS_CFUNC_getter                    = 8;
+  JS_CFUNC_setter                    = 9;
+  JS_CFUNC_getter_magic              = 10;
+  JS_CFUNC_setter_magic              = 11;
+  JS_CFUNC_iterator_next             = 12;
 
   JS_GPN_STRING_MASK  = (1 shl 0);
   JS_GPN_SYMBOL_MASK  = (1 shl 1);
@@ -183,7 +169,7 @@ const
   { only include the enumerable properties }
   JS_GPN_ENUM_ONLY = (1 shl 4);
   { set theJSPropertyEnum.is_enumerable field }
-  JS_GPN_SET_ENUM = (1 shl 5);
+  JS_GPN_SET_ENUM  = (1 shl 5);
 
   { C Call Flags }
 
@@ -195,30 +181,29 @@ type
   {$IFNDEF FPC}
     // Delphi Compatible.
     // Anything under XE4.
-    {$IF (CompilerVersion <= 25)}
-    type
-      PUint32 = ^Uint32; // PUint32 not defined in XE4 - Fix by @edwinyzh
-    {$IFEND}
-    pUInt8  	      = PByte;
-    pInt8   	      = PShortInt;
-    pInt16  	      = PSmallint;
-    PInt32  	      = PLongint;
+  {$IF (CompilerVersion <= 25)}
+    PUint32 = ^Uint32; // PUint32 not defined in XE4 - Fix by @edwinyzh
+  {$IFEND}
+    pUInt8  = PByte;
+    pInt8   = PShortInt;
+    pInt16  = PSmallint;
+    PInt32  = PLongint;
   {$ENDIF}
   {$ifdef cpu64}
-    size_t  = qword;
+    size_t  = QWord;
     psize_t = ^size_t;
   {$else}
-    size_t  = cardinal;
+    size_t  = Cardinal;
     psize_t = ^size_t;
   {$endif}
 
-  JS_BOOL = Boolean;
+  JS_BOOL   = Boolean;
   JSRuntime = Pointer;
 
   PPJSContext = ^_PJSContext; // Pointer to Pointer.
   _PJSContext = ^_JSContext;
-  _JSContext = record end; // Empty record to mimic the JSContext.
-  JSContext = Pointer;
+  _JSContext  = record end; // Empty record to mimic the JSContext.
+  JSContext   = Pointer;
 
   JSObject  = Pointer;
   JSClass   = Pointer;
@@ -243,16 +228,15 @@ type
   end;
 
 {$If Defined(JS_NAN_BOXING)}
-  JSValue        = UInt64;
-  PJSValue       = ^JSValue;
-
-  JSValueConst   = JSValue;
-  PJSValueConst  = ^JSValueConst;
-  JSValueConstArr = array[0..(MaxInt div SizeOf(JSValueConst))-1] of JSValueConst;
+  JSValue          = UInt64;
+  PJSValue         = ^JSValue;
+  JSValueConst     = JSValue;
+  PJSValueConst    = ^JSValueConst;
+  JSValueConstArr  = array[0..(MaxInt div SizeOf(JSValueConst))-1] of JSValueConst;
   PJSValueConstArr = ^JSValueConstArr;
 const
   JS_FLOAT64_TAG_ADDEND =  $7ff80000 - JS_TAG_FIRST + 1; // quiet NaN encoding
-  JS_NAN = ($7ff8000000000000 - (JS_FLOAT64_TAG_ADDEND shl 32));
+  JS_NAN                = ($7ff8000000000000 - (JS_FLOAT64_TAG_ADDEND shl 32));
 {$Else}
 type
   JSValueUnion = record
@@ -266,11 +250,10 @@ type
       u : JSValueUnion;
       tag : Int64;
   end;
-  PJSValue = ^JSValue;
-
-  JSValueConst = JSValue;
-  PJSValueConst = ^JSValueConst;
-  JSValueConstArr = array[0..(MaxInt div SizeOf(JSValueConst))-1] of JSValueConst;
+  PJSValue         = ^JSValue;
+  JSValueConst     = JSValue;
+  PJSValueConst    = ^JSValueConst;
+  JSValueConstArr  = array[0..(MaxInt div SizeOf(JSValueConst))-1] of JSValueConst;
   PJSValueConstArr = ^JSValueConstArr;
 {$ENDIF}
 type
@@ -284,7 +267,7 @@ type
 
   //c_malloc = function (s : JSMallocState; size : UInt64) : Pointer;
   //Pc_malloc = ^c_malloc;
-
+  // TODO: Check If funcs need to be Pointers or not. ^^^^^
   JSMallocFunctions = record
      js_malloc  : function (s : PJSMallocState; size : size_t) : Pointer; cdecl;
      js_free    : procedure (s : PJSMallocState; Ptr : Pointer); cdecl;
@@ -356,12 +339,12 @@ type
   { return the module specifier (allocated with js_malloc()) or NULL if exception }
   PJSModuleNormalizeFunc = ^JSModuleNormalizeFunc;
   JSModuleNormalizeFunc  = function (ctx : JSContext;
-                              const module_base_name , module_name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf};
-                              opaque : Pointer): {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; cdecl;
+                              const module_base_name , module_name : PAnsiChar;
+                              opaque : Pointer): PAnsiChar; cdecl;
 
 
   PJSModuleLoaderFunc = ^JSModuleLoaderFunc;
-  JSModuleLoaderFunc  = function (ctx : JSContext; module_name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; opaque : Pointer) : JSModuleDef; cdecl;
+  JSModuleLoaderFunc  = function (ctx : JSContext; module_name : PAnsiChar; opaque : Pointer) : JSModuleDef; cdecl;
 
   { JS Job support }
   PJSJobFunc = ^JSJobFunc;
@@ -427,7 +410,7 @@ type
 
   PJSClassDef = ^JSClassDef;
   JSClassDef = record
-    class_name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf};
+    class_name : PAnsiChar;
     finalizer : PJSClassFinalizer;
     gc_mark : PJSClassGCMark;
     {
@@ -445,22 +428,23 @@ type
 
   { C function definition }
 
-  constructor_magic_func = function (ctx: JSContext; new_target:JSValueConst; argc:Integer; argv:PJSValueConst; magic:Integer):JSValue; cdecl;
+  constructor_magic_func = function (ctx: JSContext; new_target:JSValueConst; argc:Integer; argv:PJSValueConst;
+                              magic:Integer):JSValue; cdecl;
   f_f_func    = function (_para1:double):double cdecl;
   f_f_f_func  = function (_para1:double; _para2:double):double; cdecl;
   Getter_func = function (ctx: JSContext; this_val:JSValueConst):JSValue; cdecl;
   Setter_func = function (ctx: JSContext; this_val:JSValueConst; val:JSValueConst):JSValue;cdecl;
-  getter_magic_func = function (ctx: JSContext; this_val:JSValueConst; magic:Integer):JSValue; cdecl;
-  setter_magic_func = function (ctx: JSContext; this_val:JSValueConst; val:JSValueConst; magic:Integer):JSValue; cdecl;
+  getter_magic_func  = function (ctx: JSContext; this_val:JSValueConst; magic:Integer):JSValue; cdecl;
+  setter_magic_func  = function (ctx: JSContext; this_val:JSValueConst; val:JSValueConst; magic:Integer):JSValue; cdecl;
   iterator_next_func = function (ctx: JSContext; this_val:JSValueConst; argc:Integer; argv:PJSValueConst; pdone:PInteger;
                                magic:Integer):JSValue; cdecl;
   JSCFunctionType = record
     case Integer of
-      0 : ( &generic : PJSCFunction );
+      0 : ( generic : JSCFunction );
       1 : ( generic_magic :  JSCFunctionMagic);
-      2 : ( &constructor : PJSCFunction );
+      2 : ( &constructor : JSCFunction );
       3 : ( constructor_magic : constructor_magic_func);
-      4 : ( constructor_or_func : PJSCFunction );
+      4 : ( constructor_or_func : JSCFunction );
       5 : ( f_f : f_f_func);
       6 : ( f_f_f : f_f_f_func);
       7 : ( getter : Getter_func);
@@ -473,7 +457,7 @@ type
 
   { C property definition }
   JSCFunctionListEntry = record
-    name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf};
+    name : PAnsiChar;
     prop_flags : UInt8;
     def_type : UInt8;
     magic : Int16;
@@ -489,14 +473,14 @@ type
           _set : JSCFunctionType;
         end );
       2 : ( alias : record
-          name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf};
+          name : PAnsiChar;
           base : Integer;
         end );
       3 : ( prop_list : record
           tab : ^JSCFunctionListEntry;
           len : Integer;
         end );
-      4 : ( str : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf} );
+      4 : ( str : PAnsiChar );
       5 : ( i32 : Int32 );
       6 : ( i64 : Int64 );
       7 : ( f64 : double );
@@ -504,281 +488,285 @@ type
   end;
   PJSCFunctionListEntry = ^JSCFunctionListEntry;
 
-  {$IFDEF mswindows}const QJSDLL = {$IfDef WIN64}'quickjs64.dll'{$Else}'quickjs32.dll'{$EndIf};{$endif}
+  {$IFDEF mswindows}
+    const QJSDLL = {$IfDef WIN64}'quickjs64.dll'{$Else}'quickjs32.dll'{$EndIf};
+    {$Define MSDyn}
+  {$endif}
   { QuickJS external APIs }
 
-  function  JS_NewRuntime : JSRuntime; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function  JS_NewRuntime : JSRuntime; cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
   (* info lifetime must exceed that of rt *)
-  procedure JS_SetRuntimeInfo(rt : JSRuntime; const info : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_SetMemoryLimit(rt : JSRuntime; limit : size_t); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_SetGCThreshold(rt : JSRuntime; gc_threshold : size_t); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_SetRuntimeInfo(rt : JSRuntime; const info : PAnsiChar); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_SetMemoryLimit(rt : JSRuntime; limit : size_t); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_SetGCThreshold(rt : JSRuntime; gc_threshold : size_t); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_SetMaxStackSize(ctx: JSContext; stack_size:size_t); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function  JS_NewRuntime2(const mf : PJSMallocFunctions; opaque : Pointer) : JSRuntime; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_FreeRuntime(rt : JSRuntime); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function  JS_GetRuntimeOpaque(rt : JSRuntime) : Pointer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_SetRuntimeOpaque(rt : JSRuntime; opaque : Pointer); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function  JS_NewRuntime2(const mf : PJSMallocFunctions; opaque : Pointer) : JSRuntime; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_FreeRuntime(rt : JSRuntime); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function  JS_GetRuntimeOpaque(rt : JSRuntime) : Pointer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_SetRuntimeOpaque(rt : JSRuntime; opaque : Pointer); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
 
-  procedure JS_MarkValue(rt:JSRuntime; val:JSValueConst; mark_func:PJS_MarkFunc);cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_RunGC(rt:JSRuntime);  cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_MarkValue(rt:JSRuntime; val:JSValueConst; mark_func:PJS_MarkFunc);cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_RunGC(rt:JSRuntime);  cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function JS_IsLiveObject(rt:JSRuntime; obj:JSValueConst):JS_BOOL; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  //{REMOVE}function JS_IsInGCSweep(rt:JSRuntime):JS_BOOL; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewContext(rt:JSRuntime):JSContext; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_FreeContext(s: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetContextOpaque(ctx: JSContext):pointer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_SetContextOpaque(ctx: JSContext; opaque:pointer); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetRuntime(ctx: JSContext):JSRuntime; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_SetMaxStackSize(ctx: JSContext; stack_size:size_t); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_SetClassProto(ctx: JSContext; class_id:JSClassID; obj:JSValue); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetClassProto(ctx: JSContext; class_id:JSClassID):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_IsLiveObject(rt:JSRuntime; obj:JSValueConst):JS_BOOL; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  //{REMOVE}function JS_IsInGCSweep(rt:JSRuntime):JS_BOOL; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewContext(rt:JSRuntime):JSContext; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_FreeContext(s: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_DupContext(ctx : JSContext) : JSContext; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetContextOpaque(ctx: JSContext):pointer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_SetContextOpaque(ctx: JSContext; opaque:pointer); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetRuntime(ctx: JSContext):JSRuntime; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_SetClassProto(ctx: JSContext; class_id:JSClassID; obj:JSValue); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetClassProto(ctx: JSContext; class_id:JSClassID):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
 { the following functions are used to select the intrinsic object to save memory  }
 
-  function JS_NewContextRaw(rt: JSRuntime): JSContext; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicBaseObjects(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicDate(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicEval(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicStringNormalize(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicRegExpCompiler(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicRegExp(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicJSON(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicProxy(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicMapSet(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicTypedArrays(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicPromise(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_NewContextRaw(rt: JSRuntime): JSContext; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicBaseObjects(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicDate(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicEval(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicStringNormalize(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicRegExpCompiler(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicRegExp(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicJSON(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicProxy(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicMapSet(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicTypedArrays(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicPromise(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  procedure JS_AddIntrinsicBigInt(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicBigFloat(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_AddIntrinsicBigDecimal(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_AddIntrinsicBigInt(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicBigFloat(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_AddIntrinsicBigDecimal(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   { enable operator overloading }
-  procedure JS_AddIntrinsicOperators(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_AddIntrinsicOperators(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   { enable "use math" }
-  procedure JS_EnableBignumExt(ctx: JSContext; enable : JS_BOOL); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_EnableBignumExt(ctx: JSContext; enable : JS_BOOL); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function js_string_codePointRange(ctx: JSContext; this_val:JSValueConst; argc:Integer; argv:PJSValueConst):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function js_string_codePointRange(ctx: JSContext; this_val:JSValueConst; argc:Integer; argv:PJSValueConst):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function js_malloc_rt(rt: JSRuntime; size:size_t):pointer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure js_free_rt(rt: JSRuntime; ptr:pointer); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function js_realloc_rt(rt: JSRuntime; ptr:pointer; size:size_t):pointer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function js_malloc_usable_size_rt(rt: JSRuntime; ptr:pointer):size_t; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function js_mallocz_rt(rt: JSRuntime; size:size_t):pointer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function js_malloc(ctx: JSContext; size:size_t):pointer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure js_free(ctx: JSContext; ptr:pointer); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function js_realloc(ctx: JSContext; ptr:pointer; size:size_t):pointer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function js_malloc_usable_size(ctx: JSContext; ptr:pointer):size_t; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function js_realloc2(ctx: JSContext; ptr:pointer; size:size_t; pslack:Psize_t):pointer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function js_mallocz(ctx: JSContext; size:size_t):pointer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function js_strdup(ctx: JSContext; str:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}): {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function js_strndup(ctx: JSContext; s:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; n:size_t): {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function js_malloc_rt(rt: JSRuntime; size:size_t):pointer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure js_free_rt(rt: JSRuntime; ptr:pointer); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function js_realloc_rt(rt: JSRuntime; ptr:pointer; size:size_t):pointer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function js_malloc_usable_size_rt(rt: JSRuntime; ptr:pointer):size_t; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function js_mallocz_rt(rt: JSRuntime; size:size_t):pointer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function js_malloc(ctx: JSContext; size:size_t):pointer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure js_free(ctx: JSContext; ptr:pointer); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function js_realloc(ctx: JSContext; ptr:pointer; size:size_t):pointer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function js_malloc_usable_size(ctx: JSContext; ptr:pointer):size_t; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function js_realloc2(ctx: JSContext; ptr:pointer; size:size_t; pslack:Psize_t):pointer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function js_mallocz(ctx: JSContext; size:size_t):pointer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function js_strdup(ctx: JSContext; str:PAnsiChar): PAnsiChar; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function js_strndup(ctx: JSContext; s:PAnsiChar; n:size_t): PAnsiChar; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  procedure JS_ComputeMemoryUsage(rt: JSRuntime; s:PJSMemoryUsage); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_DumpMemoryUsage(fp: Pointer; s:PJSMemoryUsage; rt: JSRuntime); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_ComputeMemoryUsage(rt: JSRuntime; s:PJSMemoryUsage); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_DumpMemoryUsage(fp: Pointer; s:PJSMemoryUsage; rt: JSRuntime); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { atom support }
 
-  function JS_NewAtomLen(ctx: JSContext; str:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; len:size_t):JSAtom; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewAtom(ctx: JSContext; str:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}):JSAtom; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewAtomUInt32(ctx: JSContext; n:UInt32):JSAtom; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_DupAtom(ctx: JSContext; v:JSAtom):JSAtom; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_FreeAtom(ctx: JSContext; v:JSAtom); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_FreeAtomRT(rt: JSRuntime; v:JSAtom); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_AtomToValue(ctx: JSContext; atom:JSAtom):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_AtomToString(ctx: JSContext; atom:JSAtom):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_AtomToCString(ctx: JSContext; atom:JSAtom):{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ValueToAtom(ctx: JSContext; val:JSValueConst) : JSAtom; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_NewAtomLen(ctx: JSContext; str:PAnsiChar; len:size_t):JSAtom; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewAtom(ctx: JSContext; str:PAnsiChar):JSAtom; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewAtomUInt32(ctx: JSContext; n:UInt32):JSAtom; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_DupAtom(ctx: JSContext; v:JSAtom):JSAtom; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_FreeAtom(ctx: JSContext; v:JSAtom); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_FreeAtomRT(rt: JSRuntime; v:JSAtom); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_AtomToValue(ctx: JSContext; atom:JSAtom):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_AtomToString(ctx: JSContext; atom:JSAtom):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_AtomToCString(ctx: JSContext; atom:JSAtom):PAnsiChar; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ValueToAtom(ctx: JSContext; val:JSValueConst) : JSAtom; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { object class support }
 
-  function JS_NewClassID(pclass_id:PJSClassID):JSClassID; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewClass(rt: JSRuntime; class_id:JSClassID; class_def: PJSClassDef):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_IsRegisteredClass(rt: JSRuntime; class_id:JSClassID):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_NewClassID(pclass_id:PJSClassID):JSClassID; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewClass(rt: JSRuntime; class_id:JSClassID; class_def: PJSClassDef):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_IsRegisteredClass(rt: JSRuntime; class_id:JSClassID):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
 
   { JS Numbers }
 
-  function JS_NewBigInt64 (ctx : JSContext; v : Int64): JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewBigUint64 (ctx : JSContext; v : UInt64): JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_NewBigInt64 (ctx : JSContext; v : Int64): JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewBigUint64 (ctx : JSContext; v : UInt64): JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
 
-  function JS_Throw(ctx: JSContext; obj:JSValue):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetException(ctx: JSContext):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_IsError(ctx: JSContext; val:JSValueConst):JS_BOOL; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_ResetUncatchableError(ctx: JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewError(ctx: JSContext):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ThrowSyntaxError(ctx: JSContext; fmt : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; args : Array of Const): JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ThrowTypeError(ctx: JSContext; fmt : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; args : Array of Const): JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ThrowReferenceError(ctx: JSContext; fmt : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; args : Array of Const): JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ThrowRangeError(ctx: JSContext; fmt : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; args : Array of Const): JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ThrowInternalError(ctx: JSContext; fmt : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; args : Array of Const): JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ThrowOutOfMemory(ctx: JSContext): JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_Throw(ctx: JSContext; obj:JSValue):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetException(ctx: JSContext):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_IsError(ctx: JSContext; val:JSValueConst):JS_BOOL; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_ResetUncatchableError(ctx: JSContext); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewError(ctx: JSContext):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ThrowSyntaxError(ctx: JSContext; fmt : PAnsiChar; args : Array of Const): JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ThrowTypeError(ctx: JSContext; fmt : PAnsiChar; args : Array of Const): JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ThrowReferenceError(ctx: JSContext; fmt : PAnsiChar; args : Array of Const): JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ThrowRangeError(ctx: JSContext; fmt : PAnsiChar; args : Array of Const): JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ThrowInternalError(ctx: JSContext; fmt : PAnsiChar; args : Array of Const): JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ThrowOutOfMemory(ctx: JSContext): JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  procedure __JS_FreeValue(ctx: JSContext; v : JSValue); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure __JS_FreeValueRT(rt: JSRuntime; v : JSValue); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure __JS_FreeValue(ctx: JSContext; v : JSValue); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure __JS_FreeValueRT(rt: JSRuntime; v : JSValue); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { JS Values - return -1 for JS_EXCEPTION }
 
-  function JS_ToBool(ctx: JSContext; val:JSValueConst):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ToInt32(ctx: JSContext; pres:pInt32; val:JSValueConst):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_ToBool(ctx: JSContext; val:JSValueConst):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ToInt32(ctx: JSContext; pres:pInt32; val:JSValueConst):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function JS_ToInt64(ctx: JSContext; pres:PInt64; val:JSValueConst):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ToIndex(ctx: JSContext; plen:PUInt64; val:JSValueConst):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ToFloat64(ctx: JSContext; pres:PDouble; val:JSValueConst):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_ToInt64(ctx: JSContext; pres:PInt64; val:JSValueConst):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ToIndex(ctx: JSContext; plen:PUInt64; val:JSValueConst):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ToFloat64(ctx: JSContext; pres:PDouble; val:JSValueConst):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   { return an exception if 'val' is a Number }
-  function JS_ToBigInt64(ctx: JSContext; pres:PInt64; val:JSValueConst):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_ToBigInt64(ctx: JSContext; pres:PInt64; val:JSValueConst):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   { same as JS_ToInt64() but allow BigInt }
-  function JS_ToInt64Ext(ctx: JSContext; pres:PInt64; val:JSValueConst):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_ToInt64Ext(ctx: JSContext; pres:PInt64; val:JSValueConst):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function JS_NewStringLen(ctx:JSContext; str1:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; len1: size_t):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewString(ctx:JSContext; str:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewAtomString(ctx:JSContext; str:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ToString(ctx:JSContext; val:JSValueConst):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ToPropertyKey(ctx:JSContext; val:JSValueConst):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ToCStringLen2(ctx:JSContext; plen:psize_t; val1:JSValueConst; cesu8:JS_BOOL): {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_NewStringLen(ctx:JSContext; str1:PAnsiChar; len1: size_t):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewString(ctx:JSContext; str:PAnsiChar):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewAtomString(ctx:JSContext; str:PAnsiChar):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ToString(ctx:JSContext; val:JSValueConst):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ToPropertyKey(ctx:JSContext; val:JSValueConst):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ToCStringLen2(ctx:JSContext; plen:psize_t; val1:JSValueConst; cesu8:JS_BOOL): PAnsiChar; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
 
 
-  procedure JS_FreeCString(ctx:JSContext; ptr:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewObjectProtoClass(ctx:JSContext; proto:JSValueConst; class_id:JSClassID):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewObjectClass(ctx:JSContext; class_id:JSClassID):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewObjectProto(ctx:JSContext; proto:JSValueConst):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewObject(ctx:JSContext):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_IsFunction(ctx:JSContext; val:JSValueConst):JS_BOOL; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_IsConstructor(ctx:JSContext; val:JSValueConst):JS_BOOL; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_SetConstructorBit(ctx:JSContext; func_obj : JSValueConst; val:JS_BOOL):JS_BOOL; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewArray(ctx:JSContext):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_IsArray(ctx:JSContext; val:JSValueConst):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_FreeCString(ctx:JSContext; ptr:PAnsiChar); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewObjectProtoClass(ctx:JSContext; proto:JSValueConst; class_id:JSClassID):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewObjectClass(ctx:JSContext; class_id:JSClassID):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewObjectProto(ctx:JSContext; proto:JSValueConst):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewObject(ctx:JSContext):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_IsFunction(ctx:JSContext; val:JSValueConst):JS_BOOL; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_IsConstructor(ctx:JSContext; val:JSValueConst):JS_BOOL; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_SetConstructorBit(ctx:JSContext; func_obj : JSValueConst; val:JS_BOOL):JS_BOOL; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewArray(ctx:JSContext):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_IsArray(ctx:JSContext; val:JSValueConst):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   function JS_GetPropertyInternal(ctx:JSContext; obj:JSValueConst; prop:JSAtom;
-                              receiver:JSValueConst; throw_ref_error:JS_BOOL):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+                              receiver:JSValueConst; throw_ref_error:JS_BOOL):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function JS_GetPropertyStr(ctx:JSContext; this_obj:JSValueConst; prop:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetPropertyUint32(ctx:JSContext; this_obj:JSValueConst; idx:UInt32):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_GetPropertyStr(ctx:JSContext; this_obj:JSValueConst; prop:PAnsiChar):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetPropertyUint32(ctx:JSContext; this_obj:JSValueConst; idx:UInt32):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   function JS_SetPropertyInternal(ctx:JSContext; this_obj:JSValueConst;
-                              prop:JSAtom; val:JSValue; flags:Integer):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+                              prop:JSAtom; val:JSValue; flags:Integer):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function JS_SetPropertyUint32(ctx:JSContext; this_obj:JSValueConst; idx:UInt32; val:JSValue):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_SetPropertyInt64(ctx:JSContext; this_obj:JSValueConst; idx:Int64; val:JSValue):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_SetPropertyStr(ctx:JSContext; this_obj:JSValueConst; prop:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val:JSValue):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_HasProperty(ctx:JSContext; this_obj:JSValueConst; prop:JSAtom):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_IsExtensible(ctx:JSContext; obj:JSValueConst):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_PreventExtensions(ctx:JSContext; obj:JSValueConst):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_DeleteProperty(ctx:JSContext; obj:JSValueConst; prop:JSAtom; flags:Integer):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_SetPrototype(ctx:JSContext; obj:JSValueConst; proto_val:JSValueConst):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetPrototype(ctx:JSContext; val:JSValueConst):JSValueConst;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_SetPropertyUint32(ctx:JSContext; this_obj:JSValueConst; idx:UInt32; val:JSValue):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_SetPropertyInt64(ctx:JSContext; this_obj:JSValueConst; idx:Int64; val:JSValue):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_SetPropertyStr(ctx:JSContext; this_obj:JSValueConst; prop:PAnsiChar; val:JSValue):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_HasProperty(ctx:JSContext; this_obj:JSValueConst; prop:JSAtom):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_IsExtensible(ctx:JSContext; obj:JSValueConst):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_PreventExtensions(ctx:JSContext; obj:JSValueConst):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_DeleteProperty(ctx:JSContext; obj:JSValueConst; prop:JSAtom; flags:Integer):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_SetPrototype(ctx:JSContext; obj:JSValueConst; proto_val:JSValueConst):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetPrototype(ctx:JSContext; val:JSValueConst):JSValueConst;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function JS_GetOwnPropertyNames(ctx: JSContext; ptab:PPJSPropertyEnum; plen: pUInt32; obj:JSValueConst; flags : Integer): Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetOwnProperty(ctx: JSContext; desc : PJSPropertyDescriptor; obj : JSValueConst; prop : JSAtom): Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_GetOwnPropertyNames(ctx: JSContext; ptab:PPJSPropertyEnum; plen: pUInt32; obj:JSValueConst; flags : Integer): Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetOwnProperty(ctx: JSContext; desc : PJSPropertyDescriptor; obj : JSValueConst; prop : JSAtom): Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { 'buf' must be zero terminated i.e. buf[buf_len] := #0.  }
-  function JS_ParseJSON(ctx:JSContext; buf:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; buf_len:size_t; filename:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_JSONStringify(ctx:JSContext; obj, replacer, space0 : JSValueConst):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_Call(ctx:JSContext; func_obj:JSValueConst; this_obj:JSValueConst; argc:Integer; argv:PJSValueConstArr):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_Invoke(ctx:JSContext; this_val:JSValueConst; atom:JSAtom; argc:Integer; argv:PJSValueConst):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_CallConstructor(ctx:JSContext; func_obj:JSValueConst; argc:Integer; argv:PJSValueConst):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_CallConstructor2(ctx:JSContext; func_obj:JSValueConst; new_target:JSValueConst; argc:Integer; argv:PJSValueConst):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_DetectModule(const input:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; input_len : size_t):JS_BOOL;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_ParseJSON(ctx:JSContext; buf:PAnsiChar; buf_len:size_t; filename:PAnsiChar):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_JSONStringify(ctx:JSContext; obj, replacer, space0 : JSValueConst):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_Call(ctx:JSContext; func_obj:JSValueConst; this_obj:JSValueConst; argc:Integer; argv:PJSValueConstArr):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_Invoke(ctx:JSContext; this_val:JSValueConst; atom:JSAtom; argc:Integer; argv:PJSValueConst):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_CallConstructor(ctx:JSContext; func_obj:JSValueConst; argc:Integer; argv:PJSValueConst):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_CallConstructor2(ctx:JSContext; func_obj:JSValueConst; new_target:JSValueConst; argc:Integer; argv:PJSValueConst):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_DetectModule(const input:PAnsiChar; input_len : size_t):JS_BOOL;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   { 'input' must be zero terminated i.e. buf[buf_len] := #0.  }
-  function JS_Eval(ctx:JSContext; input:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; input_len:size_t; filename:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; eval_flags:Integer):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_EvalFunction(ctx:JSContext; fun_obj : JSValue):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetGlobalObject(ctx:JSContext):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_IsInstanceOf(ctx:JSContext; val:JSValueConst; obj:JSValueConst):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_Eval(ctx:JSContext; input:PAnsiChar; input_len:size_t; filename:PAnsiChar; eval_flags:Integer):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_EvalFunction(ctx:JSContext; fun_obj : JSValue):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetGlobalObject(ctx:JSContext):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_IsInstanceOf(ctx:JSContext; val:JSValueConst; obj:JSValueConst):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   function JS_DefineProperty(ctx:JSContext; this_obj:JSValueConst; prop:JSAtom; val:JSValueConst; getter:JSValueConst;
-             setter:JSValueConst; flags:Integer):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+             setter:JSValueConst; flags:Integer):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function JS_DefinePropertyValue(ctx:JSContext; this_obj:JSValueConst; prop:JSAtom; val:JSValue; flags:Integer):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_DefinePropertyValueUint32(ctx:JSContext; this_obj:JSValueConst; idx:UInt32; val:JSValue; flags:Integer):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_DefinePropertyValueStr(ctx:JSContext; this_obj:JSValueConst; prop:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val:JSValue; flags:Integer):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_DefinePropertyValue(ctx:JSContext; this_obj:JSValueConst; prop:JSAtom; val:JSValue; flags:Integer):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_DefinePropertyValueUint32(ctx:JSContext; this_obj:JSValueConst; idx:UInt32; val:JSValue; flags:Integer):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_DefinePropertyValueStr(ctx:JSContext; this_obj:JSValueConst; prop:PAnsiChar; val:JSValue; flags:Integer):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   function JS_DefinePropertyGetSet(ctx:JSContext; this_obj:JSValueConst; prop:JSAtom; getter:JSValue; setter:JSValue;
-             flags:Integer):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+             flags:Integer):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  procedure JS_SetOpaque(obj:JSValue; opaque:pointer);cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetOpaque(obj:JSValueConst; class_id:JSClassID):pointer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetOpaque2(ctx:JSContext; obj:JSValueConst; class_id:JSClassID):pointer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_SetOpaque(obj:JSValue; opaque:pointer);cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetOpaque(obj:JSValueConst; class_id:JSClassID):pointer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetOpaque2(ctx:JSContext; obj:JSValueConst; class_id:JSClassID):pointer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   function JS_NewArrayBuffer(ctx:JSContext; buf:pUInt8; len:size_t; free_func:PJSFreeArrayBufferDataFunc; opaque:pointer;
-             is_shared:JS_BOOL):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_NewArrayBufferCopy(ctx:JSContext; buf:pUInt8; len:size_t):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure JS_DetachArrayBuffer(ctx:JSContext; obj:JSValueConst);cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetArrayBuffer(ctx:JSContext; psize:Psize_t; obj:JSValueConst):pUInt8;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+             is_shared:JS_BOOL):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_NewArrayBufferCopy(ctx:JSContext; buf:pUInt8; len:size_t):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  procedure JS_DetachArrayBuffer(ctx:JSContext; obj:JSValueConst);cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetArrayBuffer(ctx:JSContext; psize:Psize_t; obj:JSValueConst):pUInt8;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   function JS_GetTypedArrayBuffer(ctx : JSContext; obj : JSValueConst;
-             pbyte_offset, pbyte_length, pbytes_per_element : psize_t):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+             pbyte_offset, pbyte_length, pbytes_per_element : psize_t):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function JS_NewPromiseCapability(ctx:JSContext; resolving_funcs:PJSValue):JSValue;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_NewPromiseCapability(ctx:JSContext; resolving_funcs:PJSValue):JSValue;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   procedure JS_SetHostPromiseRejectionTracker(rt: JSRuntime;
-             cb : PJSHostPromiseRejectionTracker; opaque : Pointer); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+             cb : PJSHostPromiseRejectionTracker; opaque : Pointer); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  procedure JS_SetInterruptHandler(rt:JSRuntime; cb:PJSInterruptHandler; opaque:pointer);cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_SetInterruptHandler(rt:JSRuntime; cb:PJSInterruptHandler; opaque:pointer);cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { if can_block is TRUE, Atomics.wait() can be used  }
-  procedure JS_SetCanBlock(rt:JSRuntime; can_block:JS_BOOL);cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_SetCanBlock(rt:JSRuntime; can_block:JS_BOOL);cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { module_normalize = NULL is allowed and invokes the default module
      filename normalizer  }
   procedure JS_SetModuleLoaderFunc(rt:JSRuntime;
              module_normalize:PJSModuleNormalizeFunc;
-             module_loader:PJSModuleLoaderFunc; opaque:pointer);cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+             module_loader:PJSModuleLoaderFunc; opaque:pointer);cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { JS Job support  }
 
-  function JS_EnqueueJob(ctx:JSContext; job_func:PJSJobFunc; argc:Integer; argv:PJSValueConst):Integer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_IsJobPending(rt:JSRuntime):JS_BOOL;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_EnqueueJob(ctx:JSContext; job_func:PJSJobFunc; argc:Integer; argv:PJSValueConst):Integer;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_IsJobPending(rt:JSRuntime):JS_BOOL;cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   // TODO: Check pctx if the type is right.
-  function JS_ExecutePendingJob(rt:JSRuntime; pctx: PPJSContext):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_ExecutePendingJob(rt:JSRuntime; pctx: PPJSContext):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { Object Writer/Reader (currently only used to handle precompiled code)  }
   { allow function/module  }
 
-  function JS_WriteObject(ctx: JSContext; psize:psize_t; obj:JSValueConst; flags:Integer):pUInt8; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_ReadObject(ctx: JSContext; buf:pUInt8; buf_len:size_t; flags:Integer):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_WriteObject(ctx: JSContext; psize:psize_t; obj:JSValueConst; flags:Integer):pUInt8; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_ReadObject(ctx: JSContext; buf:pUInt8; buf_len:size_t; flags:Integer):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   {
     load the dependencies of the module 'obj'. Useful when JS_ReadObject()
      returns a module.
   }
-  function JS_ResolveModule(ctx: JSContext; obj : JSValueConst):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_ResolveModule(ctx: JSContext; obj : JSValueConst):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { C function definition }
 
-  procedure JS_SetConstructor(ctx : JSContext; func_obj, proto : JSValueConst);cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  procedure JS_SetConstructor(ctx : JSContext; func_obj, proto : JSValueConst);cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
-  function JS_NewCFunction2(ctx: JSContext; func:PJSCFunction; name:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length:Integer; cproto:JSCFunctionEnum;
-             magic:Integer):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_NewCFunction2(ctx: JSContext; func:PJSCFunction; name:PAnsiChar; length:Integer; cproto:JSCFunctionEnum;
+             magic:Integer):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
   function JS_NewCFunctionData(ctx: JSContext; func:PJSCFunctionData; length:Integer; magic:Integer; data_len:Integer;
-             data:PJSValueConst):JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+             data:PJSValueConst):JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   procedure JS_SetPropertyFunctionList(ctx: JSContext; obj:JSValueConst;
-             tab:PJSCFunctionListEntry; len:Integer); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+             tab:PJSCFunctionListEntry; len:Integer); cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { C module definition  }
 
-  function JS_NewCModule(ctx: JSContext; name_str:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; func:PJSModuleInitFunc): JSModuleDef; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_NewCModule(ctx: JSContext; name_str:PAnsiChar; func:PJSModuleInitFunc): JSModuleDef; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { can only be called before the module is instantiated  }
-  function JS_AddModuleExport(ctx: JSContext; m: JSModuleDef; name_str:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_AddModuleExportList(ctx: JSContext; m: JSModuleDef; tab:PJSCFunctionListEntry; len:Integer):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_AddModuleExport(ctx: JSContext; m: JSModuleDef; name_str:PAnsiChar):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_AddModuleExportList(ctx: JSContext; m: JSModuleDef; tab:PJSCFunctionListEntry; len:Integer):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { can only be called after the module is instantiated  }
-  function JS_SetModuleExport(ctx: JSContext; m: JSModuleDef; export_name:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val:JSValue):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_SetModuleExportList(ctx: JSContext; m: JSModuleDef; tab:PJSCFunctionListEntry; len:Integer):Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_SetModuleExport(ctx: JSContext; m: JSModuleDef; export_name:PAnsiChar; val:JSValue):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_SetModuleExportList(ctx: JSContext; m: JSModuleDef; tab:PJSCFunctionListEntry; len:Integer):Integer; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { return the import.meta object of a module }
-  function JS_GetImportMeta(ctx: JSContext; m: JSModuleDef) : JSValue; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function JS_GetModuleName(ctx: JSContext; m: JSModuleDef) : JSAtom; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function JS_GetImportMeta(ctx: JSContext; m: JSModuleDef) : JSValue; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
+  function JS_GetModuleName(ctx: JSContext; m: JSModuleDef) : JSAtom; cdecl; external {$IFDEF MSDyn}QJSDLL{$endif};
 
   { QuickJS libc }
-  function  js_init_module_std(ctx: JSContext; module_name:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}):JSModuleDef;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function  js_init_module_os(ctx: JSContext; module_name:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}):JSModuleDef;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure js_std_add_helpers(ctx : JSContext; argc : Integer; argv : Pointer);cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure js_std_loop(ctx : JSContext); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure js_std_free_handlers(rt:JSRuntime);cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure js_std_dump_error(ctx:JSContext);cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function  js_load_file(ctx:JSContext; pbuf_len: psize_t; filename:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}): Pointer;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function  js_module_loader(ctx:JSContext; module_name:{$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; opaque:pointer):JSModuleDef;cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  procedure js_std_eval_binary(ctx : JSContext; buf : Pointer; buf_len : size_t; flags : Integer); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
-  function  js_module_set_import_meta(ctx : JSContext; func_val : JSValueConst; use_realpath, is_main : JS_BOOL) : Integer; cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+  function  js_init_module_std(ctx: JSContext; module_name:PAnsiChar):JSModuleDef;cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
+  function  js_init_module_os(ctx: JSContext; module_name:PAnsiChar):JSModuleDef;cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
+  procedure js_std_add_helpers(ctx : JSContext; argc : Integer; argv : Pointer);cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
+  procedure js_std_loop(ctx : JSContext); cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
+  procedure js_std_free_handlers(rt:JSRuntime);cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
+  procedure js_std_dump_error(ctx:JSContext);cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
+  function  js_load_file(ctx:JSContext; pbuf_len: psize_t; filename:PAnsiChar): Pointer;cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
+  function  js_module_loader(ctx:JSContext; module_name:PAnsiChar; opaque:pointer):JSModuleDef;cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
+  procedure js_std_eval_binary(ctx : JSContext; buf : Pointer; buf_len : size_t; flags : Integer); cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
+  function  js_module_set_import_meta(ctx : JSContext; func_val : JSValueConst; use_realpath, is_main : JS_BOOL) : Integer; cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
   procedure js_std_promise_rejection_tracker(ctx : JSContext;
-             promise, reason : JSValueConst; is_handled : JS_BOOL; opaque : Pointer); cdecl; external {$IFDEF mswindows}QJSDLL{$endif};
+             promise, reason : JSValueConst; is_handled : JS_BOOL; opaque : Pointer); cdecl; external {$IFDEF MSDyn}{$IFDEF MSDyn}QJSDLL{$endif}{$endif};
 
 { internal implementations}
 
@@ -817,6 +805,7 @@ function JS_UNINITIALIZED : JSValue;
 
 function JS_NewBool({%H-}ctx : JSContext; val : JS_BOOL): JSValue; inline;
 function JS_NewInt32( {%H-}ctx : JSContext; val : Int32): JSValue; inline;
+function JS_NewInt64(ctx : JSContext; val : Int64): JSValue;
 function JS_NewCatchOffset( {%H-}ctx : JSContext; val : Int32): JSValue; inline;
 function JS_NewFloat64(ctx : JSContext; d : Double): JSValue;
 function JS_IsBigInt(v : JSValueConst): JS_BOOL; inline;
@@ -838,34 +827,35 @@ function JS_DupValue({%H-}ctx : JSContext; v : JSValueConst) : JSValue; inline;
 function JS_DupValueRT({%H-}rt : JSRuntime; v : JSValueConst) : JSValue; inline;
 
 function JS_ToUint32(ctx : JSContext; pres : pUInt32; val : JSValueConst): Integer; inline;
-function JS_ToCStringLen(ctx : JSContext; plen : psize_t; val : JSValueConst): {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; inline;
-function JS_ToCString(ctx : JSContext; val : JSValueConst): {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; inline;
+function JS_ToCStringLen(ctx : JSContext; plen : psize_t; val : JSValueConst): PAnsiChar; inline;
+function JS_ToCString(ctx : JSContext; val : JSValueConst): PAnsiChar; inline;
 function JS_GetProperty(ctx : JSContext; this_obj : JSValueConst; prop : JSAtom): JSValue; inline;
 function JS_SetProperty(ctx : JSContext; this_obj : JSValueConst; prop : JSAtom; val : JSValue): Integer; inline;
 
 { C function definition }
 
-function JS_NewCFunction(ctx : JSContext; func : PJSCFunction; name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer): JSValue; inline;
-function JS_NewCFunctionMagic(ctx : JSContext; func : PJSCFunctionMagic; name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer;
+function JS_NewCFunction(ctx : JSContext; func : PJSCFunction; name : PAnsiChar; length : Integer): JSValue; inline;
+function JS_NewCFunctionMagic(ctx : JSContext; func : PJSCFunctionMagic; name : PAnsiChar; length : Integer;
            cproto : JSCFunctionEnum; magic : Integer): JSValue; inline;
 
 
 { C property definition }
 
-function JS_CFUNC_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer; func1 : JSCFunctionType) : JSCFunctionListEntry;
-function JS_CFUNC_MAGIC_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer; func1 : JSCFunctionType; magic : Int16) : JSCFunctionListEntry;
-function JS_CFUNC_SPECIAL_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer; cproto : JSCFunctionEnum ; func1 : JSCFunctionType) : JSCFunctionListEntry;
-function JS_ITERATOR_NEXT_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer; func1 : JSCFunctionType; magic : Int16) : JSCFunctionListEntry;
-function JS_CGETSET_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; fgetter, fsetter : JSCFunctionType) : JSCFunctionListEntry;
-function JS_CGETSET_MAGIC_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; fgetter, fsetter : JSCFunctionType; magic : Int16) : JSCFunctionListEntry;
-function JS_PROP_STRING_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; prop_flags : UInt8) : JSCFunctionListEntry;
-function JS_PROP_INT32_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val : Int32; prop_flags : UInt8) : JSCFunctionListEntry;
-function JS_PROP_INT64_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val : Int64; prop_flags : UInt8) : JSCFunctionListEntry;
-function JS_PROP_DOUBLE_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val : Double; prop_flags : UInt8) : JSCFunctionListEntry;
-function JS_PROP_UNDEFINED_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; prop_flags : UInt8) : JSCFunctionListEntry;
-function JS_OBJECT_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; tab : PJSCFunctionListEntry;  length : Integer; prop_flags : UInt8) : JSCFunctionListEntry;
-function JS_ALIAS_DEF(name, from : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}) : JSCFunctionListEntry;
-function JS_ALIAS_BASE_DEF(name, from : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; base : Integer) : JSCFunctionListEntry;
+function JS_CFUNC_DEF(name : PAnsiChar; length : Integer; func : JSCFunction) : JSCFunctionListEntry;
+function JS_CFUNC_MAGIC_DEF(name : PAnsiChar; length : Integer; func : JSCFunctionMagic; magic : Int16) : JSCFunctionListEntry;
+function JS_CFUNC_SPECIAL_DEF(name : PAnsiChar; length : Integer; cproto : JSCFunctionEnum ; func : f_f_func) : JSCFunctionListEntry; overload;
+function JS_CFUNC_SPECIAL_DEF(name : PAnsiChar; length : Integer; cproto : JSCFunctionEnum ; func : f_f_f_func) : JSCFunctionListEntry; overload;
+function JS_ITERATOR_NEXT_DEF(name : PAnsiChar; length : Integer; iterator_next : iterator_next_func; magic : Int16) : JSCFunctionListEntry;
+function JS_CGETSET_DEF(name : PAnsiChar; fgetter : Getter_func; fsetter : Setter_func) : JSCFunctionListEntry;
+function JS_CGETSET_MAGIC_DEF(name : PAnsiChar; fgetter_magic : getter_magic_func; fsetter_magic : setter_magic_func; magic : Int16) : JSCFunctionListEntry;
+function JS_PROP_STRING_DEF(name : PAnsiChar; val : PAnsiChar; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_PROP_INT32_DEF(name : PAnsiChar; val : Int32; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_PROP_INT64_DEF(name : PAnsiChar; val : Int64; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_PROP_DOUBLE_DEF(name : PAnsiChar; val : Double; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_PROP_UNDEFINED_DEF(name : PAnsiChar; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_OBJECT_DEF(name : PAnsiChar; tab : PJSCFunctionListEntry;  length : Integer; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_ALIAS_DEF(name, from : PAnsiChar) : JSCFunctionListEntry;
+function JS_ALIAS_BASE_DEF(name, from : PAnsiChar; base : Integer) : JSCFunctionListEntry;
 
 
 var
@@ -1270,12 +1260,12 @@ begin
   Result := JS_ToInt32(ctx, pInt32(pres), val);
 end;
 
-function JS_ToCStringLen(ctx : JSContext; plen : psize_t; val : JSValueConst): {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; inline;
+function JS_ToCStringLen(ctx : JSContext; plen : psize_t; val : JSValueConst): PAnsiChar; inline;
 begin
   Result := JS_ToCStringLen2(ctx, plen, val, False);
 end;
 
-function JS_ToCString(ctx : JSContext; val : JSValueConst): {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; inline;
+function JS_ToCString(ctx : JSContext; val : JSValueConst): PAnsiChar; inline;
 begin
   Result := JS_ToCStringLen2(ctx, nil, val, False);
 end;
@@ -1290,14 +1280,16 @@ begin
   Result := JS_SetPropertyInternal(ctx, this_obj, prop, val, JS_PROP_THROW);
 end;
 
+// Add GetClassId From Object
+
 { C function definition }
 
-function JS_NewCFunction(ctx : JSContext; func : PJSCFunction; name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer): JSValue; inline;
+function JS_NewCFunction(ctx : JSContext; func : PJSCFunction; name : PAnsiChar; length : Integer): JSValue; inline;
 begin
   Result := JS_NewCFunction2(ctx, func, name, length, JS_CFUNC_generic, 0);
 end;
 
-function JS_NewCFunctionMagic(ctx : JSContext; func : PJSCFunctionMagic; name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer;
+function JS_NewCFunctionMagic(ctx : JSContext; func : PJSCFunctionMagic; name : PAnsiChar; length : Integer;
            cproto : JSCFunctionEnum; magic : Integer): JSValue; inline;
 begin
   Result := JS_NewCFunction2(ctx, PJSCFunction(func), name, length, cproto, magic);;
@@ -1305,7 +1297,8 @@ end;
 
 { C property definition }
 
-function JS_CFUNC_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer; func1 : JSCFunctionType) : JSCFunctionListEntry;
+function JS_CFUNC_DEF(name : PAnsiChar; length : Integer;
+           func : JSCFunction) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := JS_PROP_WRITABLE or JS_PROP_CONFIGURABLE;
@@ -1313,10 +1306,11 @@ begin
   Result.magic := 0;
   Result.u.func.length := length;
   Result.u.func.cproto := JS_CFUNC_generic;
-  Result.u.func.cfunc.&generic := func1.&generic;
+  Result.u.func.cfunc.generic := func;
 end;
 
-function JS_CFUNC_MAGIC_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer; func1 : JSCFunctionType; magic : Int16) : JSCFunctionListEntry;
+function JS_CFUNC_MAGIC_DEF(name : PAnsiChar; length : Integer;
+           func : JSCFunctionMagic; magic : Int16) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := JS_PROP_WRITABLE or JS_PROP_CONFIGURABLE;
@@ -1324,10 +1318,11 @@ begin
   Result.magic := magic;
   Result.u.func.length := length;
   Result.u.func.cproto := JS_CFUNC_generic_magic;
-  Result.u.func.cfunc.generic_magic := func1.generic_magic;
+  Result.u.func.cfunc.generic_magic := func;
 end;
 
-function JS_CFUNC_SPECIAL_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer; cproto : JSCFunctionEnum ; func1 : JSCFunctionType) : JSCFunctionListEntry;
+function JS_CFUNC_SPECIAL_DEF(name : PAnsiChar; length : Integer;
+           cproto : JSCFunctionEnum ; func : f_f_func) : JSCFunctionListEntry; overload;
 begin
   Result.name := name;
   Result.prop_flags := JS_PROP_WRITABLE or JS_PROP_CONFIGURABLE;
@@ -1335,13 +1330,23 @@ begin
   Result.magic := 0;
   Result.u.func.length := length;
   Result.u.func.cproto := cproto;
-  if cproto = JS_CFUNC_f_f then
-     Result.u.func.cfunc.f_f := func1.f_f;
-  if cproto = JS_CFUNC_f_f_f then
-     Result.u.func.cfunc.f_f_f := func1.f_f_f;
+  Result.u.func.cfunc.f_f := func;
 end;
 
-function JS_ITERATOR_NEXT_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; length : Integer; func1 : JSCFunctionType; magic : Int16) : JSCFunctionListEntry;
+function JS_CFUNC_SPECIAL_DEF(name : PAnsiChar; length : Integer;
+           cproto : JSCFunctionEnum ; func : f_f_f_func) : JSCFunctionListEntry; overload;
+begin
+  Result.name := name;
+  Result.prop_flags := JS_PROP_WRITABLE or JS_PROP_CONFIGURABLE;
+  Result.def_type := JS_DEF_CFUNC;
+  Result.magic := 0;
+  Result.u.func.length := length;
+  Result.u.func.cproto := cproto;
+  Result.u.func.cfunc.f_f_f := func;
+end;
+
+function JS_ITERATOR_NEXT_DEF(name : PAnsiChar; length : Integer;
+           iterator_next : iterator_next_func; magic : Int16) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := JS_PROP_WRITABLE or JS_PROP_CONFIGURABLE;
@@ -1349,32 +1354,34 @@ begin
   Result.magic := magic;
   Result.u.func.length := length;
   Result.u.func.cproto := JS_CFUNC_iterator_next;
-  Result.u.func.cfunc.iterator_next := func1.iterator_next;
+  Result.u.func.cfunc.iterator_next := iterator_next;
 end;
 
-function JS_CGETSET_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; fgetter, fsetter : JSCFunctionType) : JSCFunctionListEntry;
+function JS_CGETSET_DEF(name : PAnsiChar;
+           fgetter : Getter_func; fsetter : Setter_func ) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := JS_PROP_CONFIGURABLE;
   Result.def_type := JS_DEF_CGETSET;
   Result.magic := 0;
-// TODO: Check if this type assigment is working or not - Need some test cases.
-  Result.u.getset.get  := fgetter;
-  Result.u.getset._set := fsetter;
+  Result.u.getset.get.getter  := fgetter;
+  Result.u.getset._set.setter := fsetter;
 end;
 
-function JS_CGETSET_MAGIC_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; fgetter, fsetter : JSCFunctionType; magic : Int16) : JSCFunctionListEntry;
+function JS_CGETSET_MAGIC_DEF(name : PAnsiChar;
+           fgetter_magic : getter_magic_func;
+           fsetter_magic : setter_magic_func; magic : Int16) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := JS_PROP_CONFIGURABLE;
   Result.def_type := JS_DEF_CGETSET_MAGIC;
   Result.magic := magic;
-// TODO: Check if this type assigment is working or not - Need some test cases.
-  Result.u.getset.get.getter_magic := fgetter.getter_magic;
-  Result.u.getset._set.setter_magic := fsetter.setter_magic;
+  Result.u.getset.get.getter_magic := fgetter_magic;
+  Result.u.getset._set.setter_magic := fsetter_magic;
 end;
 
-function JS_PROP_STRING_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_PROP_STRING_DEF(name : PAnsiChar;
+           val : PAnsiChar; prop_flags : UInt8) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := prop_flags;
@@ -1383,7 +1390,8 @@ begin
   Result.u.str := val;
 end;
 
-function JS_PROP_INT32_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val : Int32; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_PROP_INT32_DEF(name : PAnsiChar;
+           val : Int32; prop_flags : UInt8) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := prop_flags;
@@ -1392,7 +1400,8 @@ begin
   Result.u.i32 := val;
 end;
 
-function JS_PROP_INT64_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val : Int64; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_PROP_INT64_DEF(name : PAnsiChar;
+           val : Int64; prop_flags : UInt8) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := prop_flags;
@@ -1401,7 +1410,8 @@ begin
   Result.u.i64 := val;
 end;
 
-function JS_PROP_DOUBLE_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; val : Double; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_PROP_DOUBLE_DEF(name : PAnsiChar;
+           val : Double; prop_flags : UInt8) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := prop_flags;
@@ -1410,7 +1420,8 @@ begin
   Result.u.f64 := val;
 end;
 
-function JS_PROP_UNDEFINED_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_PROP_UNDEFINED_DEF(name : PAnsiChar;
+           prop_flags : UInt8) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := prop_flags;
@@ -1419,7 +1430,8 @@ begin
   Result.u.i32 := 0;
 end;
 
-function JS_OBJECT_DEF(name : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; tab : PJSCFunctionListEntry;  length : Integer; prop_flags : UInt8) : JSCFunctionListEntry;
+function JS_OBJECT_DEF(name : PAnsiChar; tab : PJSCFunctionListEntry;
+           length : Integer; prop_flags : UInt8) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := prop_flags;
@@ -1429,7 +1441,7 @@ begin
   Result.u.prop_list.len := length;
 end;
 
-function JS_ALIAS_DEF(name, from : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}) : JSCFunctionListEntry;
+function JS_ALIAS_DEF(name, from : PAnsiChar) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := JS_PROP_WRITABLE or JS_PROP_CONFIGURABLE;
@@ -1439,7 +1451,7 @@ begin
   Result.u.alias.base := -1;
 end;
 
-function JS_ALIAS_BASE_DEF(name, from : {$IFDEF FPC}PChar{$Else}PAnsiChar{$EndIf}; base : Integer) : JSCFunctionListEntry;
+function JS_ALIAS_BASE_DEF(name, from : PAnsiChar; base : Integer) : JSCFunctionListEntry;
 begin
   Result.name := name;
   Result.prop_flags := JS_PROP_WRITABLE or JS_PROP_CONFIGURABLE;
@@ -1450,12 +1462,13 @@ begin
 end;
 
 { bignum stuff :D }
-{$IfDef BIGNUM}
-function c_udivti3(num,den:uint64):uint64; cdecl; {$ifdef darwin}[public, alias: '___udivti3'];{$else}[public, alias: '__udivdi3'];{$endif}
+{$IFDEF FPC}
+function c_udivti3(num,den:uint64):uint64; cdecl; public alias: {$ifdef darwin}'___udivti3'{$else} '__udivdi3'{$endif};
 begin
  result:=num div den;
 end;
 {$ENDIF}
+
 
 initialization
   // fix the Invalid floating point operation .
