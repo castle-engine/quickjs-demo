@@ -5,10 +5,11 @@ interface
 
 
 uses
-  CastleWindow,CastleApplicationProperties, CastleKeysMouse, CastleGLImages, CastleGLUtils,
+  CastleWindow,CastleApplicationProperties,
+  CastleKeysMouse, CastleGLImages, CastleGLUtils,
   CastleVectors, CastleControls, CastleLog,
   SysUtils, Math,
-  SnakeUnit, QJS_Engine, QuickJS;
+  SnakeUnit, QJS_Engine, QuickJS, QJSUtils;
 
 
 
@@ -18,7 +19,7 @@ const
   DestinationScale = SourceScale*2;
 
 var { basic CastleWindow }
-    Window: TCastleWindowBase;
+    //Window: TCastleWindowBase;
     { All 16 sprites in one image }
     SnakeImage, SnakeFlipImage: TDrawableImage;
     {create some cheap animation effect}
@@ -90,57 +91,12 @@ begin
   end;
 end;
 
-procedure CallJSUpdate();
-var
-  JSErr, JSResult, JSFunc : JSValue;
-begin
-
-  if not Assigned(QJSCtx) then
-  begin
-    WritelnLog('QJS Ctx Is nil');
-    exit;
-  end;
-
-  if not JS_IsObject(JSGlobal) then
-  begin
-    WritelnLog('JSGlobal Is not Obj');
-    exit;
-  end;
-
-  if JS_IsObject(OnUpdate) and JS_IsFunction(QJSCtx,OnUpdate) then
-  begin
-    JSFunc := JS_DupValue(QJSCtx,OnUpdate);
-    JSResult := JS_Call(QJSCtx,JSFunc,JS_UNDEFINED,0,nil);
-    JS_FreeValue(QJSCtx,JSFunc);
-
-    if JS_IsException(JSResult) then
-    begin
-      WritelnLog('[X] QJS Call Error');
-      js_dump_error(QJSCtx);
-      //Window.Close();
-    end;
-    JS_FreeValue(QJSCtx,JSResult);
-  end
-  else
-  begin
-    JSErr := JS_GetException(QJSCtx);
-    if JS_IsException(JSErr) then
-    begin
-      WritelnLog('[X] QJS Undefined Error');
-      js_dump_error(QJSCtx);
-      //Window.Close();
-    end;
-    JS_FreeValue(QJSCtx, JSErr);
-  end;
-end;
 
 {this procedure is called very 300 miliseconds}
 procedure DoTimer;
 begin
  if not GameOver then
  begin
-   // Call JS update.
-   CallJSUpdate();
    snake.move;
    flipImage := not flipImage;
  end;
@@ -150,85 +106,81 @@ end;
 procedure KeyPress({%H-}Container: TUIContainer; const Event: TInputPressRelease);
 var dx,dy: integer;
 begin
-  if not GameOver then
-  begin
-    if event.EventType = itKey then
-      {this event is a keyboard event. Detect which button has been pressed}
-      case event.key of
-        k_up    : Snake.setDirection(0,1);
-        k_down  : Snake.setDirection(0,-1);
-        k_left  : Snake.setDirection(-1,0);
-        k_right : Snake.setDirection(1,0);
-        k_m     : toggleMusic;
-      else ;
-      end
-
-    else if event.EventType = itMouseButton then begin
-      {this event is a mouse button or touch event.
-       get click/touch coordinates.
-       event.Position[0] is x and event.Position[1] is y}
-      dx := round(event.Position[0]-(snake.x+0.5)*DestinationScale);
-      dy := round(event.Position[1]-(snake.y+0.5)*DestinationScale);
-      {and set the direction accordingly}
-      if abs(dx)>abs(dy) then begin
-        if not Snake.setDirection(Sign(dx),0) then Snake.setDirection(0,Sign(dy))
-      end else begin
-        if not Snake.setDirection(0,Sign(dy)) then Snake.setDirection(Sign(dx),0)
-      end;
-    end;
-  end
-  else
-    NewGame;
+  //if not GameOver then
+  //begin
+  //  if event.EventType = itKey then
+  //    {this event is a keyboard event. Detect which button has been pressed}
+  //    case event.key of
+  //      k_up    : Snake.setDirection(0,1);
+  //      k_down  : Snake.setDirection(0,-1);
+  //      k_left  : Snake.setDirection(-1,0);
+  //      k_right : Snake.setDirection(1,0);
+  //      k_m     : toggleMusic;
+  //    else ;
+  //    end
+  //
+  //  else if event.EventType = itMouseButton then begin
+  //    {this event is a mouse button or touch event.
+  //     get click/touch coordinates.
+  //     event.Position[0] is x and event.Position[1] is y}
+  //    dx := round(event.Position[0]-(snake.x+0.5)*DestinationScale);
+  //    dy := round(event.Position[1]-(snake.y+0.5)*DestinationScale);
+  //    {and set the direction accordingly}
+  //    if abs(dx)>abs(dy) then begin
+  //      if not Snake.setDirection(Sign(dx),0) then Snake.setDirection(0,Sign(dy))
+  //    end else begin
+  //      if not Snake.setDirection(0,Sign(dy)) then Snake.setDirection(Sign(dx),0)
+  //    end;
+  //  end;
+  //end
+  //else
+  //  NewGame;
 end;
 
 procedure LoadData();
 begin
+  //SnakeImage := TDrawableImage.Create('castle-data:/Snake.png',false);
+  //SnakeFlipImage := TDrawableImage.Create('castle-data:/SnakeFlip.png',false);
+  //
+  //ReadHighScore;
+  {Load music and sound}
+  //LoadMusic;
 
   // Init QuickJS Engine.
-  InitQJS('movement.js');
-
-  SnakeImage := TDrawableImage.Create('castle-data:/Snake.png',false);
-  SnakeFlipImage := TDrawableImage.Create('castle-data:/SnakeFlip.png',false);
-
-  ReadHighScore;
-  {Load music and sound}
-  LoadMusic;
-end;
-
-function MyGetApplicationName: string;
-begin
-  Result := 'snake-game';
 end;
 
 initialization
   // Init Logs.
   InitializeLog;
+  ApplicationProperties._FileAccessSafe := true;
+  InitQJS('main.js');
+  ApplicationProperties._FileAccessSafe := False;
 
-  ApplicationProperties.ApplicationName := 'snake-game';
+  // ReImplementing the Full Game Step by Step
 
-  OnGetApplicationName := @MyGetApplicationName;
+  //
+  //{map size is 16x16}
+  //maxx := 15;
+  //maxy := 15;
+  //
+  //{set the appropriate window size}
+  //Window.Width := (maxx+1)*destinationScale;
+  //Window.Height := (maxy+1)*destinationScale;
+  //
 
-  SnakeImage := nil; SnakeFlipImage := nil;
 
-  Application.OnInitialize := @LoadData;
-
+  (*
   {create window}
-  Window := TCastleWindowBase.create(Application);
-  Application.MainWindow := Window;
+
 
   {initialize random sequence}
   randomize;
 
-  {map size is 16x16}
-  maxx := 15;
-  maxy := 15;
 
-  {set the appropriate window size}
-  Window.Width := (maxx+1)*destinationScale;
-  Window.Height := (maxy+1)*destinationScale;
 
   flipImage := true;
 
+  // Both of the Snake & Rabbit Classes Can be Implemented in JS
   {create snake}
   Snake := TSnake.create(Application);
   {create rabbit}
@@ -246,6 +198,6 @@ initialization
   {start a new game}
   score := 0;
   NewGame;
-
+  *)
 end.
 

@@ -96,7 +96,7 @@ var MaxX,MaxY: Integer;
     GameOver: Boolean;
     Score, BestScore: Integer;
     {sounds and music to be used in game}
-    EatSound, EndSound, Music: TSoundBuffer;
+    EatSound, EndSound, Music: TInternalSoundBuffer;
     PlaySound: Boolean; //sound on/off
     LicenseString: String;
 

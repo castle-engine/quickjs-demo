@@ -1,12 +1,10 @@
-program SnakeGame;
-uses
-  CastleWindow, SnakeGameMain, QJS_Engine,SnakeUnit, sysutils;
+Program SnakeGame;
 
-begin
-  Application.MainWindow.OpenAndRun;
+{$mode delphi}{$H+}{$M+}
+Uses
+  QJS_Engine;
 
-  {don't forget to free everything that is not freed automatically}
-  UnInitJSEngine();
-  FreeAndNil(SnakeImage);
-  FreeAndNil(SnakeFlipImage);
-end.
+Begin
+  // We don't need any thing here :D
+  // All Inizilization Will Start in QJS_Engine Unit.
+End.
