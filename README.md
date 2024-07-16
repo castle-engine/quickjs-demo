@@ -14,6 +14,8 @@ The core file to play with is the [data/main.js](https://github.com/castle-engin
 
 - `Window.OnRender` that allows you to render whatever you want from JS engine side.
 
+- And more ^_^
+
 ## Supported platforms
 
 The demo is cross-platform and should support every platform supported by [Castle Game Engine](https://castle-engine.io/). Build it using [Castle Game Engine build tool](https://castle-engine.io/build_tool) or [Lazarus](https://www.lazarus-ide.org/).
